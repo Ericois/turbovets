@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Task Management System</title>
+    <title>Enhanced Task Management System</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -202,17 +202,11 @@
             font-size: 14px;
         }
         
-        .stats-and-charts {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 15px;
+            margin-bottom: 20px;
         }
         
         .stat-card {
@@ -242,19 +236,23 @@
             border-radius: 8px;
             box-shadow: var(--shadow);
             border: 1px solid var(--border-color);
-            height: 200px;
+            margin-top: 20px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .chart-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             margin-bottom: 10px;
             color: var(--text-primary);
+            text-align: center;
         }
         
         .chart-wrapper {
             position: relative;
-            height: 150px;
+            height: 120px;
         }
         
         .filter-bar {
@@ -465,6 +463,12 @@
             cursor: pointer;
         }
         
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+        }
+        
         @media (max-width: 768px) {
             .task-board {
                 grid-template-columns: 1fr;
@@ -479,20 +483,14 @@
                 flex-direction: column;
             }
             
-            .stats-and-charts {
-                grid-template-columns: 1fr;
-            }
-            
             .stats {
                 grid-template-columns: repeat(2, 1fr);
             }
             
             .chart-container {
-                height: 250px;
-            }
-            
-            .chart-wrapper {
-                height: 200px;
+                max-width: 100%;
+                margin-left: 0;
+                margin-right: 0;
             }
         }
     </style>
@@ -501,7 +499,7 @@
     <div class="container">
         <!-- Login Form -->
         <div id="loginForm" class="login-form">
-            <h2 style="text-align: center; margin-bottom: 30px;"> Task Management System</h2>
+            <h2 style="text-align: center; margin-bottom: 30px;">Enhanced Task Management System</h2>
             <form id="login">
                 <div class="form-group">
                     <label for="email">Email</label>
@@ -527,9 +525,9 @@
         <div id="dashboard" class="dashboard">
             <div class="header">
                 <div class="user-info">
-                    <h1> Task Management Dashboard</h1>
+                    <h1>Enhanced Task Dashboard</h1>
                     <div>
-                        <span id="userInfo"></span>
+                        <span id="userInfo" class="loading">Loading user info...</span>
                         <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙 Dark Mode</button>
                         <button class="logout-btn" onclick="logout()">Logout</button>
                     </div>
@@ -537,32 +535,23 @@
                 <button class="create-task-btn" onclick="showCreateTaskModal()">Create New Task</button>
             </div>
             
-            <!-- Statistics and Charts -->
-            <div class="stats-and-charts">
-                <div class="stats">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalTasks">0</div>
-                        <div class="stat-label">Total Tasks</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="todoTasks">0</div>
-                        <div class="stat-label">To Do</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="inProgressTasks">0</div>
-                        <div class="stat-label">In Progress</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="completedTasks">0</div>
-                        <div class="stat-label">Completed</div>
-                    </div>
+            <!-- Statistics -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalTasks">0</div>
+                    <div class="stat-label">Total Tasks</div>
                 </div>
-                
-                <div class="chart-container">
-                    <div class="chart-title">Task Completion Overview</div>
-                    <div class="chart-wrapper">
-                        <canvas id="taskChart"></canvas>
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="todoTasks">0</div>
+                    <div class="stat-label">To Do</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="inProgressTasks">0</div>
+                    <div class="stat-label">In Progress</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completedTasks">0</div>
+                    <div class="stat-label">Completed</div>
                 </div>
             </div>
             
@@ -614,15 +603,23 @@
             <div class="task-board">
                 <div class="task-column todo-column" data-status="todo">
                     <div class="column-header">To Do</div>
-                    <div class="task-list" id="todoTasks"></div>
+                    <div class="task-list" id="todoTaskList"></div>
                 </div>
                 <div class="task-column in-progress-column" data-status="in_progress">
                     <div class="column-header">In Progress</div>
-                    <div class="task-list" id="inProgressTasks"></div>
+                    <div class="task-list" id="inProgressTaskList"></div>
                 </div>
                 <div class="task-column completed-column" data-status="completed">
                     <div class="column-header">Completed</div>
-                    <div class="task-list" id="completedTasks"></div>
+                    <div class="task-list" id="completedTaskList"></div>
+                </div>
+            </div>
+            
+            <!-- Small Chart Below Tasks -->
+            <div class="chart-container">
+                <div class="chart-title">Task Completion Overview</div>
+                <div class="chart-wrapper">
+                    <canvas id="taskChart"></canvas>
                 </div>
             </div>
         </div>
@@ -702,16 +699,45 @@
         // Check if user is already logged in
         window.onload = function() {
             const token = localStorage.getItem('token');
-            const user = localStorage.getItem('user');
-            if (token && user) {
-                currentUser = JSON.parse(user);
-                showDashboard();
-                loadTasks();
+            if (token) {
+                // Verify token and get user info
+                verifyTokenAndLoadUser();
             }
             initializeDragAndDrop();
             setupEventListeners();
             initializeTheme();
         };
+
+        // Secure authentication - only store JWT, fetch user info from profile endpoint
+        async function verifyTokenAndLoadUser() {
+            try {
+                const response = await fetch(`${API_URL}/auth/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    currentUser = await response.json();
+                    showDashboard();
+                    loadTasks();
+                } else {
+                    // Token is invalid, clear it and show login
+                    localStorage.removeItem('token');
+                    showLogin();
+                }
+            } catch (error) {
+                console.error('Error verifying token:', error);
+                localStorage.removeItem('token');
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+            currentUser = null;
+        }
 
         function initializeTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -765,11 +791,10 @@
                 const data = await response.json();
                 
                 if (response.ok) {
+                    // Only store the JWT token - no user data
                     localStorage.setItem('token', data.access_token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    currentUser = data.user;
-                    showDashboard();
-                    loadTasks();
+                    // Fetch user info from profile endpoint
+                    await verifyTokenAndLoadUser();
                 } else {
                     errorDiv.textContent = data.message || 'Login failed';
                     errorDiv.style.display = 'block';
@@ -787,11 +812,10 @@
         }
 
         function logout() {
+            // Only clear the JWT token
             localStorage.removeItem('token');
-            localStorage.removeItem('user');
             currentUser = null;
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('dashboard').style.display = 'none';
+            showLogin();
             document.getElementById('login').reset();
             document.getElementById('error').style.display = 'none';
         }
@@ -806,10 +830,13 @@
                 
                 if (response.ok) {
                     tasks = await response.json();
-                    filteredTasks = [...tasks];
-                    renderTasks();
+                    // Re-apply current filters after loading new tasks
+                    filterTasks();
                     updateStats();
                     updateChart();
+                } else if (response.status === 401) {
+                    // Token expired, redirect to login
+                    logout();
                 } else {
                     console.error('Failed to load tasks');
                 }
@@ -863,9 +890,9 @@
         }
 
         function renderTasks() {
-            const todoContainer = document.getElementById('todoTasks');
-            const inProgressContainer = document.getElementById('inProgressTasks');
-            const completedContainer = document.getElementById('completedTasks');
+            const todoContainer = document.getElementById('todoTaskList');
+            const inProgressContainer = document.getElementById('inProgressTaskList');
+            const completedContainer = document.getElementById('completedTaskList');
             
             // Clear containers
             todoContainer.innerHTML = '';
@@ -882,13 +909,13 @@
         function getContainerByStatus(status) {
             switch (status) {
                 case 'todo':
-                    return document.getElementById('todoTasks');
+                    return document.getElementById('todoTaskList');
                 case 'in_progress':
-                    return document.getElementById('inProgressTasks');
+                    return document.getElementById('inProgressTaskList');
                 case 'completed':
-                    return document.getElementById('completedTasks');
+                    return document.getElementById('completedTaskList');
                 default:
-                    return document.getElementById('todoTasks');
+                    return document.getElementById('todoTaskList');
             }
         }
 
@@ -962,7 +989,7 @@
                             '#3b82f6',
                             '#10b981'
                         ],
-                        borderWidth: 2
+                        borderWidth: 1
                     }]
                 },
                 options: {
@@ -979,7 +1006,7 @@
                             ticks: {
                                 color: textColor,
                                 font: {
-                                    size: 12
+                                    size: 10
                                 }
                             },
                             grid: {
@@ -990,7 +1017,7 @@
                             ticks: {
                                 color: textColor,
                                 font: {
-                                    size: 12
+                                    size: 10
                                 }
                             },
                             grid: {
@@ -1094,6 +1121,8 @@
                     }
                     updateStats();
                     updateChart();
+                } else if (response.status === 401) {
+                    logout();
                 } else {
                     console.error('Failed to update task status');
                     // Revert the UI change
@@ -1173,6 +1202,8 @@
                 if (response.ok) {
                     closeTaskModal();
                     loadTasks();
+                } else if (response.status === 401) {
+                    logout();
                 } else {
                     alert('Failed to save task');
                 }
@@ -1195,6 +1226,8 @@
                 
                 if (response.ok) {
                     loadTasks();
+                } else if (response.status === 401) {
+                    logout();
                 } else {
                     alert('Failed to delete task');
                 }
