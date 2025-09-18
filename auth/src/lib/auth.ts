@@ -1,4 +1,5 @@
 import { SetMetadata, createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { Permission, Role, hasPermission, canAccessOrganization, canAccessTask, User, Task } from '@turbovets/data';
 
 // Permission decorator for methods
@@ -25,6 +26,8 @@ export const OrganizationId = createParamDecorator(
 
 // RBAC Guard with hardened organization scoping
 export class RbacGuard {
+  constructor(private reflector: Reflector) {}
+
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const user: User = request.user;
@@ -62,14 +65,14 @@ export class RbacGuard {
   }
 
   private getPermissions(context: ExecutionContext): Permission[] {
-    const permissions = Reflector.getMetadata('permissions', context.getHandler()) ||
-                      Reflector.getMetadata('permissions', context.getClass());
+    const permissions = this.reflector.get('permissions', context.getHandler()) ||
+                      this.reflector.get('permissions', context.getClass());
     return permissions || [];
   }
 
   private getRoles(context: ExecutionContext): Role[] {
-    const roles = Reflector.getMetadata('roles', context.getHandler()) ||
-                 Reflector.getMetadata('roles', context.getClass());
+    const roles = this.reflector.get('roles', context.getHandler()) ||
+                 this.reflector.get('roles', context.getClass());
     return roles || [];
   }
 
@@ -84,7 +87,7 @@ export class RbacGuard {
 
 // Enhanced RBAC Guard for services with database access
 export class EnhancedRbacGuard {
-  constructor(private organizationsService?: any) {}
+  constructor(private reflector: Reflector, private organizationsService?: any) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -133,14 +136,14 @@ export class EnhancedRbacGuard {
   }
 
   private getPermissions(context: ExecutionContext): Permission[] {
-    const permissions = Reflector.getMetadata('permissions', context.getHandler()) ||
-                      Reflector.getMetadata('permissions', context.getClass());
+    const permissions = this.reflector.get('permissions', context.getHandler()) ||
+                      this.reflector.get('permissions', context.getClass());
     return permissions || [];
   }
 
   private getRoles(context: ExecutionContext): Role[] {
-    const roles = Reflector.getMetadata('roles', context.getHandler()) ||
-                 Reflector.getMetadata('roles', context.getClass());
+    const roles = this.reflector.get('roles', context.getHandler()) ||
+                 this.reflector.get('roles', context.getClass());
     return roles || [];
   }
 
@@ -196,6 +199,3 @@ export const RequireTaskAccess = () => {
     return descriptor;
   };
 };
-
-// Import Reflector for metadata access
-import { Reflector } from '@nestjs/core';

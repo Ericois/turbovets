@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Task } from '../entities/task.entity';
 import { User } from '../entities/user.entity';
 import { CreateTaskDto, UpdateTaskDto, TaskStatus, TaskPriority, canAccessTaskWithHierarchy, canModifyTaskWithHierarchy, canDeleteTaskWithHierarchy } from '@turbovets/data';
@@ -33,12 +33,13 @@ export class TasksService {
     // Get all accessible organizations for the user
     const accessibleOrgIds = await this.getAccessibleOrganizationIds(user);
     
+    // Find all tasks from accessible organizations
     const tasks = await this.taskRepository.find({
-      where: { organizationId: { $in: accessibleOrgIds } } as any, // TypeORM syntax may vary
+      where: { organizationId: In(accessibleOrgIds) },
       relations: ['assignedTo', 'createdBy', 'organization'],
     });
     
-    // Filter tasks using hardened organization scoping
+    // Additional filtering using hardened organization scoping
     const filteredTasks = [];
     for (const task of tasks) {
       if (await canAccessTaskWithHierarchy(user, task, this.organizationsService.isDescendantOf.bind(this.organizationsService))) {
@@ -59,6 +60,7 @@ export class TasksService {
       throw new NotFoundException(`Task with ID ${id} not found.`);
     }
     
+    // Check if user has access to this task using hierarchical organization scoping
     if (!(await canAccessTaskWithHierarchy(user, task, this.organizationsService.isDescendantOf.bind(this.organizationsService)))) {
       throw new UnauthorizedException('Unauthorized access to this task.');
     }
@@ -76,6 +78,7 @@ export class TasksService {
       throw new NotFoundException(`Task with ID ${id} not found.`);
     }
     
+    // Check if user can modify this task using hierarchical organization scoping
     if (!(await canModifyTaskWithHierarchy(user, task, this.organizationsService.isDescendantOf.bind(this.organizationsService)))) {
       throw new UnauthorizedException('Unauthorized to modify this task.');
     }
@@ -99,6 +102,7 @@ export class TasksService {
       throw new NotFoundException(`Task with ID ${id} not found.`);
     }
     
+    // Check if user can delete this task using hierarchical organization scoping
     if (!(await canDeleteTaskWithHierarchy(user, task, this.organizationsService.isDescendantOf.bind(this.organizationsService)))) {
       throw new UnauthorizedException('Unauthorized to delete this task.');
     }
