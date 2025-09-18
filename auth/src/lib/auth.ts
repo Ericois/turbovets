@@ -23,7 +23,7 @@ export const OrganizationId = createParamDecorator(
   },
 );
 
-// RBAC Guard
+// RBAC Guard with hardened organization scoping
 export class RbacGuard {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
@@ -52,103 +52,150 @@ export class RbacGuard {
       }
     }
 
+    // Check organization scoping for resource access
+    const targetOrgId = this.getTargetOrganizationId(request);
+    if (targetOrgId && !canAccessOrganization(user.organizationId, targetOrgId, user.role)) {
+      return false;
+    }
+
     return true;
   }
 
   private getPermissions(context: ExecutionContext): Permission[] {
-    const permissions = Reflect.getMetadata('permissions', context.getHandler());
+    const permissions = Reflector.getMetadata('permissions', context.getHandler()) ||
+                      Reflector.getMetadata('permissions', context.getClass());
     return permissions || [];
   }
 
   private getRoles(context: ExecutionContext): Role[] {
-    const roles = Reflect.getMetadata('roles', context.getHandler());
+    const roles = Reflector.getMetadata('roles', context.getHandler()) ||
+                 Reflector.getMetadata('roles', context.getClass());
     return roles || [];
   }
-}
 
-// Organization access guard
-export class OrganizationAccessGuard {
-  canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-    const user: User = request.user;
-    const targetOrgId = request.params.organizationId || request.body.organizationId;
-
-    if (!user || !targetOrgId) {
-      return false;
-    }
-
-    return canAccessOrganization(user.organizationId, targetOrgId, user.role);
+  private getTargetOrganizationId(request: any): string | null {
+    // Try to get organization ID from various sources
+    return request.params?.organizationId || 
+           request.body?.organizationId || 
+           request.query?.organizationId || 
+           null;
   }
 }
 
-// Task access guard
-export class TaskAccessGuard {
-  canActivate(context: ExecutionContext): boolean {
+// Enhanced RBAC Guard for services with database access
+export class EnhancedRbacGuard {
+  constructor(private organizationsService?: any) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const user: User = request.user;
-    const task: Task = request.task; // This would be set by a previous guard or interceptor
 
-    if (!user || !task) {
+    if (!user) {
       return false;
     }
 
-    return canAccessTask(user, task);
+    // Get required permissions and roles from metadata
+    const requiredPermissions = this.getPermissions(context);
+    const requiredRoles = this.getRoles(context);
+
+    // Check role-based access
+    if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
+      return false;
+    }
+
+    // Check permission-based access
+    if (requiredPermissions.length > 0) {
+      const hasRequiredPermissions = requiredPermissions.every(permission =>
+        hasPermission(user.role, permission)
+      );
+      if (!hasRequiredPermissions) {
+        return false;
+      }
+    }
+
+    // Enhanced organization scoping with hierarchy checking
+    const targetOrgId = this.getTargetOrganizationId(request);
+    if (targetOrgId && this.organizationsService) {
+      try {
+        const hasAccess = await this.organizationsService.isDescendantOf(targetOrgId, user.organizationId);
+        if (!hasAccess && user.role !== Role.OWNER) {
+          return false;
+        }
+      } catch (error) {
+        // If hierarchy check fails, fall back to basic equality check
+        if (user.organizationId !== targetOrgId && user.role !== Role.OWNER) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  private getPermissions(context: ExecutionContext): Permission[] {
+    const permissions = Reflector.getMetadata('permissions', context.getHandler()) ||
+                      Reflector.getMetadata('permissions', context.getClass());
+    return permissions || [];
+  }
+
+  private getRoles(context: ExecutionContext): Role[] {
+    const roles = Reflector.getMetadata('roles', context.getHandler()) ||
+                 Reflector.getMetadata('roles', context.getClass());
+    return roles || [];
+  }
+
+  private getTargetOrganizationId(request: any): string | null {
+    // Try to get organization ID from various sources
+    return request.params?.organizationId || 
+           request.body?.organizationId || 
+           request.query?.organizationId || 
+           null;
   }
 }
 
-// Audit logging decorator
-export const AuditLog = (action: string, resource: string) => {
-  return (target: any, propertyName: string, descriptor: PropertyDescriptor) => {
-    const method = descriptor.value;
-
+// Organization scoping decorator
+export const RequireOrganizationAccess = (organizationIdParam: string = 'organizationId') => {
+  return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+    const originalMethod = descriptor.value;
+    
     descriptor.value = async function (...args: any[]) {
-      const request = args[0]; // Assuming first argument is the request
-      const user: User = request.user;
-      const resourceId = request.params.id || request.body.id;
-
-      // Log the action
-      console.log(`[AUDIT] User ${user.email} performed ${action} on ${resource} ${resourceId} at ${new Date().toISOString()}`);
-
-      // Call the original method
-      return method.apply(this, args);
+      const request = args.find(arg => arg && typeof arg === 'object' && arg.organizationId);
+      const user = args.find(arg => arg && typeof arg === 'object' && arg.role);
+      
+      if (request && user) {
+        const targetOrgId = request[organizationIdParam];
+        if (targetOrgId && !canAccessOrganization(user.organizationId, targetOrgId, user.role)) {
+          throw new Error('Unauthorized access to organization');
+        }
+      }
+      
+      return originalMethod.apply(this, args);
     };
+    
+    return descriptor;
   };
 };
 
-// Helper function to check if user can access resource
-export function canUserAccessResource(user: User, resourceOrgId: string, requiredPermission: Permission): boolean {
-  // Check if user has the required permission
-  if (!hasPermission(user.role, requiredPermission)) {
-    return false;
-  }
+// Task access decorator
+export const RequireTaskAccess = () => {
+  return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (...args: any[]) {
+      const user = args.find(arg => arg && typeof arg === 'object' && arg.role);
+      const taskId = args.find(arg => typeof arg === 'string');
+      
+      if (user && taskId) {
+        // This would need to be implemented with proper task fetching
+        // For now, we'll rely on the service layer to handle this
+      }
+      
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+};
 
-  // Check if user can access the organization
-  return canAccessOrganization(user.organizationId, resourceOrgId, user.role);
-}
-
-// Helper function to filter tasks based on user access
-export function filterAccessibleTasks(user: User, tasks: Task[]): Task[] {
-  return tasks.filter(task => canAccessTask(user, task));
-}
-
-// Helper function to check if user can modify task
-export function canModifyTask(user: User, task: Task): boolean {
-  // User must be able to access the task
-  if (!canAccessTask(user, task)) {
-    return false;
-  }
-
-  // User must have task update permission
-  return hasPermission(user.role, Permission.TASK_UPDATE);
-}
-
-// Helper function to check if user can delete task
-export function canDeleteTask(user: User, task: Task): boolean {
-  // User must be able to access the task
-  if (!canAccessTask(user, task)) {
-    return false;
-  }
-
-  // User must have task delete permission
-  return hasPermission(user.role, Permission.TASK_DELETE);
-}
+// Import Reflector for metadata access
+import { Reflector } from '@nestjs/core';

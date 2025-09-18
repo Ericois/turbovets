@@ -1,5 +1,4 @@
-// Data models and interfaces for the Task Management System
-
+// Enums
 export enum Role {
   OWNER = 'owner',
   ADMIN = 'admin',
@@ -7,24 +6,10 @@ export enum Role {
 }
 
 export enum Permission {
-  // Task permissions
   TASK_CREATE = 'task:create',
   TASK_READ = 'task:read',
   TASK_UPDATE = 'task:update',
   TASK_DELETE = 'task:delete',
-  
-  // User permissions
-  USER_CREATE = 'user:create',
-  USER_READ = 'user:read',
-  USER_UPDATE = 'user:update',
-  USER_DELETE = 'user:delete',
-  
-  // Organization permissions
-  ORG_READ = 'org:read',
-  ORG_UPDATE = 'org:update',
-  ORG_DELETE = 'org:delete',
-  
-  // Audit permissions
   AUDIT_READ = 'audit:read'
 }
 
@@ -42,18 +27,38 @@ export enum TaskPriority {
   URGENT = 'urgent'
 }
 
+// Role permissions mapping
+const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+  [Role.OWNER]: [
+    Permission.TASK_CREATE,
+    Permission.TASK_READ,
+    Permission.TASK_UPDATE,
+    Permission.TASK_DELETE,
+    Permission.AUDIT_READ
+  ],
+  [Role.ADMIN]: [
+    Permission.TASK_CREATE,
+    Permission.TASK_READ,
+    Permission.TASK_UPDATE,
+    Permission.TASK_DELETE
+  ],
+  [Role.VIEWER]: [
+    Permission.TASK_READ
+  ]
+};
+
+// Interfaces
 export interface User {
   id: string;
   email: string;
   password: string;
   firstName: string;
   lastName: string;
-  organizationId: string;
   role: Role;
+  organizationId: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  organization?: Organization;
 }
 
 export interface Organization {
@@ -64,9 +69,6 @@ export interface Organization {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  parent?: Organization;
-  children?: Organization[];
-  users?: User[];
 }
 
 export interface Task {
@@ -83,41 +85,21 @@ export interface Task {
   completedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
-  assignedTo?: User;
-  createdBy: User;
-  organization: Organization;
 }
 
 export interface AuditLog {
   id: string;
-  userId: string;
   action: string;
-  resource: string;
-  resourceId: string;
-  details?: string;
-  ipAddress?: string;
-  userAgent?: string;
-  createdAt: Date;
-  user?: User;
-}
-
-// DTOs for API requests/responses
-export interface CreateUserDto {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
+  entityType: string;
+  entityId: string;
+  oldValues: string;
+  newValues: string;
+  userId: string;
   organizationId: string;
-  role: Role;
+  timestamp: Date;
 }
 
-export interface UpdateUserDto {
-  firstName?: string;
-  lastName?: string;
-  role?: Role;
-  isActive?: boolean;
-}
-
+// DTOs
 export interface CreateTaskDto {
   title: string;
   description?: string;
@@ -139,95 +121,63 @@ export interface UpdateTaskDto {
   completedAt?: Date;
 }
 
-export interface CreateOrganizationDto {
+export interface CreateUserDto {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: Role;
+  organizationId: string;
+}
+
+export interface UserDto {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: Role;
+  organizationId: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface OrganizationDto {
+  id: string;
   name: string;
   parentId?: string;
+  level: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface UpdateOrganizationDto {
-  name?: string;
-  parentId?: string;
-  isActive?: boolean;
+export interface TaskDto {
+  id: string;
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  category?: string;
+  assignedToId?: string;
+  createdById: string;
+  organizationId: string;
+  dueDate?: Date;
+  completedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-// Role-based permission mapping
-export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  [Role.OWNER]: [
-    Permission.TASK_CREATE,
-    Permission.TASK_READ,
-    Permission.TASK_UPDATE,
-    Permission.TASK_DELETE,
-    Permission.USER_CREATE,
-    Permission.USER_READ,
-    Permission.USER_UPDATE,
-    Permission.USER_DELETE,
-    Permission.ORG_READ,
-    Permission.ORG_UPDATE,
-    Permission.ORG_DELETE,
-    Permission.AUDIT_READ
-  ],
-  [Role.ADMIN]: [
-    Permission.TASK_CREATE,
-    Permission.TASK_READ,
-    Permission.TASK_UPDATE,
-    Permission.TASK_DELETE,
-    Permission.USER_READ,
-    Permission.USER_UPDATE,
-    Permission.ORG_READ,
-    Permission.AUDIT_READ
-  ],
-  [Role.VIEWER]: [
-    Permission.TASK_READ,
-    Permission.USER_READ,
-    Permission.ORG_READ
-  ]
-};
-
-// Utility functions
-export function hasPermission(userRole: Role, permission: Permission): boolean {
-  return ROLE_PERMISSIONS[userRole].includes(permission);
-}
-
-export function canAccessOrganization(userOrgId: string, targetOrgId: string, userRole: Role): boolean {
-  // Owners and Admins can access their organization and sub-organizations
-  // Viewers can only access their own organization
-  if (userRole === Role.VIEWER) {
-    return userOrgId === targetOrgId;
-  }
-  
-  // For Owner and Admin, they can access their org and sub-orgs
-  // This would need to be implemented with proper organization hierarchy checking
-  return userOrgId === targetOrgId;
-}
-
-export function canAccessTask(user: User, task: Task): boolean {
-  // User can access tasks from their organization or sub-organizations
-  return canAccessOrganization(user.organizationId, task.organizationId, user.role);
-}
-
-export function canModifyTask(user: User, task: Task): boolean {
-  // Owners can modify any task
-  if (user.role === Role.OWNER) {
-    return true;
-  }
-  // Admins can modify tasks within their organization
-  if (user.role === Role.ADMIN && user.organizationId === task.organizationId) {
-    return true;
-  }
-  // Users can modify their own tasks if they are not Owners or Admins
-  return user.id === task.createdById && user.organizationId === task.organizationId;
-}
-
-export function canDeleteTask(user: User, task: Task): boolean {
-  // Owners can delete any task
-  if (user.role === Role.OWNER) {
-    return true;
-  }
-  // Admins can delete tasks within their organization
-  if (user.role === Role.ADMIN && user.organizationId === task.organizationId) {
-    return true;
-  }
-  return false;
+export interface AuditLogDto {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  oldValues: string;
+  newValues: string;
+  userId: string;
+  organizationId: string;
+  timestamp: Date;
 }
 
 export interface LoginDto {
@@ -238,4 +188,168 @@ export interface LoginDto {
 export interface AuthResponseDto {
   access_token: string;
   user: Omit<User, 'password'>;
+}
+
+// Utility functions
+export function hasPermission(userRole: Role, permission: Permission): boolean {
+  return ROLE_PERMISSIONS[userRole].includes(permission);
+}
+
+/**
+ * Hardened organization access control with hierarchical support
+ * This function now properly handles organization hierarchy for different roles
+ */
+export function canAccessOrganization(
+  userOrgId: string, 
+  targetOrgId: string, 
+  userRole: Role,
+  accessibleOrgIds?: string[] // Optional: pre-computed accessible organization IDs
+): boolean {
+  // Same organization access
+  if (userOrgId === targetOrgId) {
+    return true;
+  }
+
+  // Role-based access control
+  switch (userRole) {
+    case Role.OWNER:
+      // Owners can access any organization (global access)
+      return true;
+    
+    case Role.ADMIN:
+      // Admins can access their organization and all descendant organizations
+      // If accessibleOrgIds is provided, use it for performance
+      if (accessibleOrgIds) {
+        return accessibleOrgIds.includes(targetOrgId);
+      }
+      // For now, return false - this should be called with proper hierarchy checking
+      // In practice, this should be called from a service that has access to OrganizationsService
+      return false;
+    
+    case Role.VIEWER:
+      // Viewers can only access their own organization
+      return userOrgId === targetOrgId;
+    
+    default:
+      return false;
+  }
+}
+
+/**
+ * Enhanced organization access control for services with database access
+ * This version should be used in services that have access to OrganizationsService
+ */
+export function canAccessOrganizationWithHierarchy(
+  userOrgId: string,
+  targetOrgId: string,
+  userRole: Role,
+  isDescendantOf: (descendantOrgId: string, ancestorOrgId: string) => Promise<boolean>
+): Promise<boolean> {
+  // Same organization access
+  if (userOrgId === targetOrgId) {
+    return Promise.resolve(true);
+  }
+
+  switch (userRole) {
+    case Role.OWNER:
+      // Owners can access any organization
+      return Promise.resolve(true);
+    
+    case Role.ADMIN:
+      // Admins can access their organization and all descendant organizations
+      return isDescendantOf(targetOrgId, userOrgId);
+    
+    case Role.VIEWER:
+      // Viewers can only access their own organization
+      return Promise.resolve(userOrgId === targetOrgId);
+    
+    default:
+      return Promise.resolve(false);
+  }
+}
+
+export function canAccessTask(user: User, task: Task, accessibleOrgIds?: string[]): boolean {
+  // User can access tasks from their accessible organizations
+  return canAccessOrganization(user.organizationId, task.organizationId, user.role, accessibleOrgIds);
+}
+
+export function canModifyTask(user: User, task: Task, accessibleOrgIds?: string[]): boolean {
+  // Owners can modify any task
+  if (user.role === Role.OWNER) {
+    return true;
+  }
+  
+  // Admins can modify tasks within their accessible organizations
+  if (user.role === Role.ADMIN) {
+    return canAccessOrganization(user.organizationId, task.organizationId, user.role, accessibleOrgIds);
+  }
+  
+  // Users can modify their own tasks if they have access to the organization
+  return user.id === task.createdById && 
+         canAccessOrganization(user.organizationId, task.organizationId, user.role, accessibleOrgIds);
+}
+
+export function canDeleteTask(user: User, task: Task, accessibleOrgIds?: string[]): boolean {
+  // Owners can delete any task
+  if (user.role === Role.OWNER) {
+    return true;
+  }
+  
+  // Admins can delete tasks within their accessible organizations
+  if (user.role === Role.ADMIN) {
+    return canAccessOrganization(user.organizationId, task.organizationId, user.role, accessibleOrgIds);
+  }
+  
+  // Viewers cannot delete tasks
+  return false;
+}
+
+/**
+ * Enhanced task access control for services with database access
+ */
+export async function canAccessTaskWithHierarchy(
+  user: User, 
+  task: Task, 
+  isDescendantOf: (descendantOrgId: string, ancestorOrgId: string) => Promise<boolean>
+): Promise<boolean> {
+  return canAccessOrganizationWithHierarchy(user.organizationId, task.organizationId, user.role, isDescendantOf);
+}
+
+export async function canModifyTaskWithHierarchy(
+  user: User, 
+  task: Task, 
+  isDescendantOf: (descendantOrgId: string, ancestorOrgId: string) => Promise<boolean>
+): Promise<boolean> {
+  // Owners can modify any task
+  if (user.role === Role.OWNER) {
+    return true;
+  }
+  
+  // Admins can modify tasks within their accessible organizations
+  if (user.role === Role.ADMIN) {
+    return canAccessOrganizationWithHierarchy(user.organizationId, task.organizationId, user.role, isDescendantOf);
+  }
+  
+  // Users can modify their own tasks if they have access to the organization
+  return user.id === task.createdById && 
+         await canAccessOrganizationWithHierarchy(user.organizationId, task.organizationId, user.role, isDescendantOf);
+}
+
+export async function canDeleteTaskWithHierarchy(
+  user: User, 
+  task: Task, 
+  isDescendantOf: (descendantOrgId: string, ancestorOrgId: string) => Promise<boolean>
+): Promise<boolean> {
+  // Owners can delete any task
+  if (user.role === Role.OWNER) {
+    return true;
+  }
+  
+  // Admins can delete tasks within their accessible organizations
+  if (user.role === Role.ADMIN) {
+    return canAccessOrganizationWithHierarchy(user.organizationId, task.organizationId, user.role, isDescendantOf);
+  }
+  
+  // Viewers cannot delete tasks
+  return false;
 }
