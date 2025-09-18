@@ -1,273 +1,354 @@
-# Task Management System with RBAC
+# 🚀 Turbovets - Secure Task Management System
 
-A secure Task Management System built with NX monorepo, featuring role-based access control (RBAC), JWT authentication, and a modern Angular frontend with TailwindCSS.
+A comprehensive, enterprise-grade task management system built with **NestJS**, **Angular**, and **NX** monorepo architecture, featuring **Role-Based Access Control (RBAC)** and **hierarchical organization management**.
 
-## 🏗️ Architecture Overview
+## ✨ Features
 
-This project uses an NX monorepo structure with the following applications and libraries:
+### 🔐 Security & Access Control
+- **JWT Authentication** with secure token management
+- **Role-Based Access Control (RBAC)** with hierarchical permissions
+- **Organization Hierarchy** with parent-child relationships
+- **Audit Logging** for all system activities
+- **HTTP Interceptors** for uniform token handling
 
+### 📋 Task Management
+- **CRUD Operations** for tasks with full validation
+- **Drag & Drop** interface for intuitive task management
+- **Sort, Filter & Categorize** tasks by multiple criteria
+- **Task Status Tracking** (Todo, In Progress, Completed, Cancelled)
+- **Priority Levels** (Low, Medium, High, Urgent)
+- **Due Date Management** with completion tracking
+
+### 📊 Analytics & Visualization
+- **Task Completion Charts** with Chart.js integration
+- **Real-time Statistics** and progress tracking
+- **Responsive Design** with mobile support
+
+### 🎨 User Experience
+- **Dark/Light Mode** toggle with persistent preferences
+- **Keyboard Shortcuts** for power users
+- **Responsive UI** built with TailwindCSS
+- **Modern Angular** frontend with TypeScript
+
+## 🏗️ Architecture
+
+### **Monorepo Structure (NX Workspace)**
 ```
 turbovets/
 ├── apps/
-│   ├── api/                 # NestJS backend API
-│   └── dashboard/           # Angular frontend
+│   ├── api/                 # NestJS Backend API
+│   └── dashboard/           # Angular Frontend
 ├── libs/
-│   ├── data/               # Shared TypeScript interfaces & DTOs
-│   └── auth/               # Reusable RBAC logic and decorators
-└── packages/               # NX packages
+│   ├── data/               # Shared DTOs & RBAC Logic
+│   └── auth/               # Reusable Auth Decorators & Guards
+├── static-frontend/        # Static HTML Frontend (Alternative)
+└── data/                   # Database & Seed Files
 ```
+
+### **Backend (NestJS + TypeORM + SQLite)**
+- **Entities**: User, Organization, Task, AuditLog
+- **Services**: AuthService, TasksService, OrganizationsService
+- **Guards**: JWT authentication + RBAC permission guards
+- **Controllers**: RESTful API endpoints with access control
+
+### **Frontend (Angular + TailwindCSS)**
+- **Components**: Task management, authentication, dashboard
+- **Services**: API integration with HTTP interceptors
+- **Guards**: Route protection and authentication
+- **Interceptors**: Automatic token attachment and error handling
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### **Prerequisites**
+- **Node.js 18+** ([Download](https://nodejs.org/))
+- **npm** (comes with Node.js)
+- **Git** ([Download](https://git-scm.com/))
 
-- Node.js (v18 or higher)
-- npm
-
-### Installation
-
-1. Clone the repository and install dependencies:
+### **One-Command Setup**
 ```bash
-npm install
+# Clone the repository
+git clone https://github.com/Ericois/turbovets.git
+cd turbovets
+
+# Run the setup script
+./setup.sh
 ```
 
-2. Set up the database and seed initial data:
+### **Manual Setup**
+
+#### **1. Install Dependencies**
 ```bash
-cd api
-npm run seed
+npm install --legacy-peer-deps
 ```
 
-3. Start the backend API:
+#### **2. Environment Configuration**
 ```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit configuration (optional)
+nano .env
+```
+
+#### **3. Build Shared Libraries**
+```bash
+npx nx build data
+npx nx build auth
+```
+
+#### **4. Initialize Database**
+```bash
+npm run seed:db
+```
+
+#### **5. Start the Application**
+
+**Option A: Full Stack (Recommended)**
+```bash
+# Terminal 1: Start API server
 npm run start:api
+
+# Terminal 2: Start Angular frontend
+npm run start:frontend
 ```
 
-4. Start the frontend dashboard:
+**Option B: Static Frontend (Alternative)**
 ```bash
-npm run start:dashboard
+# Terminal 1: Start API server
+npm run start:api
+
+# Terminal 2: Start static frontend
+npm run start:static
 ```
 
-5. Open your browser and navigate to `http://localhost:4200`
+## 🌐 Access Points
 
-## 🔐 Authentication & Authorization
+| Service | URL | Description |
+|---------|-----|-------------|
+| **API Server** | http://localhost:3000 | Backend REST API |
+| **Angular Frontend** | http://localhost:4200 | Main Angular application |
+| **Static Frontend** | http://localhost:4201 | Alternative HTML frontend |
+| **Enhanced Dashboard** | http://localhost:4202 | Advanced UI with charts |
 
-### Test Accounts
+## 🔐 Default Credentials
 
-The system comes with pre-configured test accounts:
+| Role | Email | Password | Access Level |
+|------|-------|----------|--------------|
+| **Owner** | owner@acme.com | password123 | Global access to all organizations |
+| **Admin** | admin@acme.com | password123 | Access to their org + sub-organizations |
+| **Viewer** | viewer@acme.com | password123 | Read-only access to their organization |
 
-- **Owner**: `owner@acme.com` / `password123`
-- **Admin**: `admin@acme.com` / `password123`
-- **Viewer**: `viewer@acme.com` / `password123`
+## 📚 API Documentation
 
-### Role-Based Access Control
+### **Authentication Endpoints**
+```http
+POST /auth/login          # User login
+GET  /auth/profile        # Get current user profile
+```
 
-The system implements three roles with different permission levels:
+### **Task Management Endpoints**
+```http
+GET    /tasks             # Get all accessible tasks
+POST   /tasks             # Create new task
+GET    /tasks/:id         # Get specific task
+PATCH  /tasks/:id         # Update task
+DELETE /tasks/:id         # Delete task
+```
 
-#### Owner
-- Full access to all resources
-- Can create, read, update, and delete tasks
-- Can manage users and organizations
-- Can view audit logs
+### **Audit Logging**
+```http
+GET /audit-logs           # Get audit logs (Owner/Admin only)
+```
 
-#### Admin
-- Can create, read, update, and delete tasks
-- Can read and update users
-- Can read organization information
-- Can view audit logs
+## 🛠️ Development
 
-#### Viewer
-- Can only read tasks, users, and organization information
-- Cannot modify any data
+### **Available Scripts**
+```bash
+# Development
+npm run start:api         # Start API server
+npm run start:frontend    # Start Angular frontend
+npm run start:static      # Start static frontend
 
-## 📊 Data Model
+# Building
+npm run build:api         # Build API
+npm run build:dashboard   # Build Angular frontend
 
-### Core Entities
+# Database
+npm run seed:db           # Seed database with sample data
 
-#### User
-- `id`: Unique identifier
-- `email`: Login email (unique)
-- `password`: Hashed password
-- `firstName`, `lastName`: User details
-- `organizationId`: Associated organization
-- `role`: User role (Owner, Admin, Viewer)
-- `isActive`: Account status
+# Testing
+npm run test:api          # Run API tests
+npm run test:dashboard    # Run frontend tests
+npm run test:e2e          # Run end-to-end tests
 
-#### Organization
-- `id`: Unique identifier
-- `name`: Organization name
-- `parentId`: Parent organization (for hierarchy)
-- `level`: Hierarchy level (0 = root, 1 = sub-org)
-- `isActive`: Organization status
+# Linting
+npm run lint              # Lint all code
+npm run lint:fix          # Fix linting issues
+```
 
-#### Task
-- `id`: Unique identifier
-- `title`: Task title
-- `description`: Task description
-- `status`: TaskStatus (todo, in_progress, completed, cancelled)
-- `priority`: TaskPriority (low, medium, high, urgent)
-- `category`: Task category
-- `assignedToId`: Assigned user
-- `createdById`: Task creator
-- `organizationId`: Associated organization
-- `dueDate`: Due date
-- `completedAt`: Completion timestamp
+### **Project Structure**
+```
+apps/
+├── api/                  # NestJS Backend
+│   ├── src/
+│   │   ├── auth/         # Authentication module
+│   │   ├── tasks/        # Task management module
+│   │   ├── organizations/ # Organization hierarchy module
+│   │   ├── audit/        # Audit logging module
+│   │   └── entities/     # Database entities
+│   └── dist/             # Built API
+├── dashboard/            # Angular Frontend
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── components/    # UI components
+│   │   │   ├── services/      # API services
+│   │   │   ├── interceptors/  # HTTP interceptors
+│   │   │   └── guards/        # Route guards
+│   │   └── assets/       # Static assets
+│   └── dist/             # Built frontend
+libs/
+├── data/                 # Shared Data Library
+│   └── src/lib/
+│       └── data.ts       # DTOs, enums, RBAC functions
+└── auth/                 # Shared Auth Library
+    └── src/lib/
+        └── auth.ts       # Decorators, guards, RBAC logic
+```
 
-#### AuditLog
-- `id`: Unique identifier
-- `userId`: User who performed the action
-- `action`: Action performed
-- `resource`: Resource type
-- `resourceId`: Resource identifier
-- `details`: Additional details
-- `ipAddress`, `userAgent`: Request metadata
-- `createdAt`: Timestamp
+## 🔒 Security Features
 
-## 🔌 API Endpoints
+### **Authentication & Authorization**
+- **JWT Tokens** with configurable expiration
+- **HTTP Interceptors** for automatic token attachment
+- **Route Guards** for protected endpoints
+- **Role-based permissions** with hierarchical access
 
-### Authentication
-- `POST /auth/login` - User login
-- `POST /auth/register` - User registration (Owner/Admin only)
-- `GET /auth/profile` - Get current user profile
+### **Organization Hierarchy**
+- **Parent-child relationships** with proper validation
+- **Descendant access** for admins
+- **Isolated access** for viewers
+- **Database-backed hierarchy** checking
 
-### Tasks
-- `GET /tasks` - List all accessible tasks
-- `GET /tasks/:id` - Get specific task
-- `POST /tasks` - Create new task
-- `PATCH /tasks/:id` - Update task
-- `DELETE /tasks/:id` - Delete task
-- `GET /tasks/status/:status` - Filter by status
-- `GET /tasks/category/:category` - Filter by category
-
-### Audit
-- `GET /audit/logs` - View audit logs (Owner/Admin only)
-
-## 🎨 Frontend Features
-
-### Task Dashboard
-- **Responsive Design**: Mobile-first approach with TailwindCSS
-- **Task Management**: Create, edit, delete, and view tasks
-- **Filtering**: Filter by status and category
-- **Role-based UI**: Different features based on user role
-- **Real-time Updates**: Immediate UI updates after actions
-
-### Authentication UI
-- **Login Form**: Clean, accessible login interface
-- **Role Indicators**: Visual role badges
-- **Error Handling**: User-friendly error messages
-
-## 🛡️ Security Features
-
-### JWT Authentication
-- Secure token-based authentication
-- Token expiration (24 hours)
-- Automatic token validation
-
-### RBAC Implementation
-- Permission-based access control
-- Organization-level data isolation
-- Role inheritance and hierarchy
-
-### Data Validation
-- Input validation on both frontend and backend
-- SQL injection prevention with TypeORM
-- XSS protection
+### **Data Protection**
+- **Input validation** with class-validator
+- **SQL injection protection** via TypeORM
+- **CORS configuration** for cross-origin requests
+- **Audit logging** for all operations
 
 ## 🧪 Testing
 
-### Backend Testing
+### **Backend Testing**
 ```bash
+# Run all API tests
 npm run test:api
+
+# Run specific test file
+npm run test:api -- --testNamePattern="TasksService"
+
+# Run with coverage
+npm run test:api -- --coverage
 ```
 
-### Frontend Testing
+### **Frontend Testing**
 ```bash
+# Run Angular tests
 npm run test:dashboard
+
+# Run e2e tests
+npm run test:e2e
 ```
-
-### E2E Testing
-```bash
-npm run e2e:dashboard
-```
-
-## 📁 Project Structure
-
-### Backend (NestJS)
-```
-api/
-├── src/
-│   ├── entities/           # TypeORM entities
-│   ├── auth/              # Authentication module
-│   ├── tasks/             # Tasks module
-│   ├── audit/             # Audit logging module
-│   └── main.ts            # Application entry point
-└── .env                   # Environment variables
-```
-
-### Frontend (Angular)
-```
-dashboard/
-├── src/
-│   ├── app/
-│   │   ├── components/    # Angular components
-│   │   ├── services/      # Angular services
-│   │   └── app.routes.ts  # Routing configuration
-│   └── styles.css         # Global styles with TailwindCSS
-```
-
-### Shared Libraries
-```
-libs/
-├── data/                  # Shared interfaces and DTOs
-└── auth/                  # RBAC decorators and guards
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env` file in the `api` directory:
-
-```env
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
-DATABASE_URL=sqlite:database.sqlite
-PORT=3000
-```
-
-### Database Configuration
-
-The system uses SQLite for development. For production, update the database configuration in `api/src/app.module.ts`.
 
 ## 🚀 Deployment
 
-### Backend Deployment
-1. Set production environment variables
-2. Build the application: `npm run build:api`
-3. Deploy to your preferred platform
+### **Production Environment**
+1. **Update .env** with production values:
+   ```bash
+   NODE_ENV=production
+   DB_SYNCHRONIZE=false
+   JWT_SECRET=your-production-secret
+   CORS_ORIGINS=https://yourdomain.com
+   ```
 
-### Frontend Deployment
-1. Update API URLs in services
-2. Build the application: `npm run build:dashboard`
-3. Deploy to your preferred platform
+2. **Build the application**:
+   ```bash
+   npm run build:api
+   npm run build:dashboard
+   ```
 
-## 🔮 Future Enhancements
+3. **Deploy** to your preferred platform (Docker, Heroku, AWS, etc.)
 
-### Advanced Features
-- **Task Dependencies**: Link related tasks
-- **Time Tracking**: Track time spent on tasks
-- **File Attachments**: Attach files to tasks
-- **Comments System**: Add comments to tasks
-- **Notifications**: Real-time notifications
-- **Advanced Reporting**: Analytics and reports
+### **Docker Deployment** (Optional)
+```dockerfile
+# Example Dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build:api
+EXPOSE 3000
+CMD ["npm", "run", "start:api"]
+```
 
-### Security Improvements
-- **JWT Refresh Tokens**: Implement refresh token rotation
-- **CSRF Protection**: Add CSRF tokens
-- **Rate Limiting**: Implement API rate limiting
-- **RBAC Caching**: Cache permission checks for performance
+## 🤝 Contributing
 
-### Scalability
-- **Database Optimization**: Add indexes and query optimization
-- **Caching Layer**: Implement Redis caching
-- **Microservices**: Split into microservices
-- **Load Balancing**: Add load balancer support
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Commit** your changes: `git commit -m 'Add amazing feature'`
+4. **Push** to the branch: `git push origin feature/amazing-feature`
+5. **Open** a Pull Request
 
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Troubleshooting
+
+### **Common Issues**
+
+**Node.js Version Error**
+```bash
+# Upgrade to Node.js 18+
+nvm install 18
+nvm use 18
+```
+
+**Database Connection Error**
+```bash
+# Check if database file exists
+ls -la database.sqlite
+
+# Recreate database
+rm database.sqlite
+npm run seed:db
+```
+
+**CORS Error**
+```bash
+# Check .env file
+cat .env | grep CORS_ORIGINS
+
+# Update CORS origins in .env
+CORS_ORIGINS=http://localhost:4200,http://localhost:4201,http://localhost:4202
+```
+
+**Build Errors**
+```bash
+# Clean and reinstall
+rm -rf node_modules package-lock.json
+npm install --legacy-peer-deps
+
+# Rebuild libraries
+npx nx build data
+npx nx build auth
+```
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/Ericois/turbovets/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Ericois/turbovets/discussions)
+- **Email**: erict0320@gmail.com
+
+---
+
+**Built with ❤️ using NestJS, Angular, and NX**
