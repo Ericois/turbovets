@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Task, CreateTaskDto, UpdateTaskDto, TaskStatus, TaskPriority } from '@turbovets/data';
 
@@ -11,53 +11,51 @@ export class TasksService {
 
   constructor(private http: HttpClient) {}
 
-  private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
-  }
-
+  // No need for manual headers - interceptor handles authentication
   getTasks(): Observable<Task[]> {
-    return this.http.get<Task[]>(`${this.API_URL}/tasks`, {
-      headers: this.getHeaders()
-    });
+    return this.http.get<Task[]>(`${this.API_URL}/tasks`);
   }
 
   getTask(id: string): Observable<Task> {
-    return this.http.get<Task>(`${this.API_URL}/tasks/${id}`, {
-      headers: this.getHeaders()
-    });
+    return this.http.get<Task>(`${this.API_URL}/tasks/${id}`);
   }
 
   createTask(task: CreateTaskDto): Observable<Task> {
-    return this.http.post<Task>(`${this.API_URL}/tasks`, task, {
-      headers: this.getHeaders()
-    });
+    return this.http.post<Task>(`${this.API_URL}/tasks`, task);
   }
 
   updateTask(id: string, task: UpdateTaskDto): Observable<Task> {
-    return this.http.patch<Task>(`${this.API_URL}/tasks/${id}`, task, {
-      headers: this.getHeaders()
-    });
+    return this.http.patch<Task>(`${this.API_URL}/tasks/${id}`, task);
   }
 
   deleteTask(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.API_URL}/tasks/${id}`, {
-      headers: this.getHeaders()
-    });
+    return this.http.delete<void>(`${this.API_URL}/tasks/${id}`);
   }
 
   getTasksByStatus(status: TaskStatus): Observable<Task[]> {
-    return this.http.get<Task[]>(`${this.API_URL}/tasks/status/${status}`, {
-      headers: this.getHeaders()
-    });
+    return this.http.get<Task[]>(`${this.API_URL}/tasks/status/${status}`);
   }
 
   getTasksByCategory(category: string): Observable<Task[]> {
-    return this.http.get<Task[]>(`${this.API_URL}/tasks/category/${category}`, {
-      headers: this.getHeaders()
-    });
+    return this.http.get<Task[]>(`${this.API_URL}/tasks/category/${category}`);
+  }
+
+  // Additional methods for filtering and sorting
+  getTasksWithFilters(filters: {
+    search?: string;
+    category?: string;
+    priority?: string;
+    status?: TaskStatus;
+    sortBy?: string;
+  }): Observable<Task[]> {
+    const params = new URLSearchParams();
+    
+    if (filters.search) params.append('search', filters.search);
+    if (filters.category) params.append('category', filters.category);
+    if (filters.priority) params.append('priority', filters.priority);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+
+    return this.http.get<Task[]>(`${this.API_URL}/tasks?${params.toString()}`);
   }
 }
