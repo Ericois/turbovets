@@ -1,108 +1,273 @@
-# Turbovets
+# Task Management System with RBAC
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A secure Task Management System built with NX monorepo, featuring role-based access control (RBAC), JWT authentication, and a modern Angular frontend with TailwindCSS.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## 🏗️ Architecture Overview
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/npm-workspaces-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
-
-## Run tasks
-
-To run tasks with Nx use:
-
-```sh
-npx nx <target> <project-name>
-```
-
-For example:
-
-```sh
-npx nx build myproject
-```
-
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
-
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Versioning and releasing
-
-To version and release the library use
+This project uses an NX monorepo structure with the following applications and libraries:
 
 ```
-npx nx release
+turbovets/
+├── apps/
+│   ├── api/                 # NestJS backend API
+│   └── dashboard/           # Angular frontend
+├── libs/
+│   ├── data/               # Shared TypeScript interfaces & DTOs
+│   └── auth/               # Reusable RBAC logic and decorators
+└── packages/               # NX packages
 ```
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+## 🚀 Quick Start
 
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Prerequisites
 
-## Add new projects
+- Node.js (v18 or higher)
+- npm
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+### Installation
 
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
+1. Clone the repository and install dependencies:
+```bash
+npm install
 ```
 
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
-
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
-
-# Generate a library
-npx nx g @nx/react:lib some-lib
+2. Set up the database and seed initial data:
+```bash
+cd api
+npm run seed
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
-
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
+3. Start the backend API:
+```bash
+npm run start:api
 ```
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
+4. Start the frontend dashboard:
+```bash
+npm run start:dashboard
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+5. Open your browser and navigate to `http://localhost:4200`
 
-## Install Nx Console
+## 🔐 Authentication & Authorization
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+### Test Accounts
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+The system comes with pre-configured test accounts:
 
-## Useful links
+- **Owner**: `owner@acme.com` / `password123`
+- **Admin**: `admin@acme.com` / `password123`
+- **Viewer**: `viewer@acme.com` / `password123`
 
-Learn more:
+### Role-Based Access Control
 
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/npm-workspaces-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+The system implements three roles with different permission levels:
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+#### Owner
+- Full access to all resources
+- Can create, read, update, and delete tasks
+- Can manage users and organizations
+- Can view audit logs
+
+#### Admin
+- Can create, read, update, and delete tasks
+- Can read and update users
+- Can read organization information
+- Can view audit logs
+
+#### Viewer
+- Can only read tasks, users, and organization information
+- Cannot modify any data
+
+## 📊 Data Model
+
+### Core Entities
+
+#### User
+- `id`: Unique identifier
+- `email`: Login email (unique)
+- `password`: Hashed password
+- `firstName`, `lastName`: User details
+- `organizationId`: Associated organization
+- `role`: User role (Owner, Admin, Viewer)
+- `isActive`: Account status
+
+#### Organization
+- `id`: Unique identifier
+- `name`: Organization name
+- `parentId`: Parent organization (for hierarchy)
+- `level`: Hierarchy level (0 = root, 1 = sub-org)
+- `isActive`: Organization status
+
+#### Task
+- `id`: Unique identifier
+- `title`: Task title
+- `description`: Task description
+- `status`: TaskStatus (todo, in_progress, completed, cancelled)
+- `priority`: TaskPriority (low, medium, high, urgent)
+- `category`: Task category
+- `assignedToId`: Assigned user
+- `createdById`: Task creator
+- `organizationId`: Associated organization
+- `dueDate`: Due date
+- `completedAt`: Completion timestamp
+
+#### AuditLog
+- `id`: Unique identifier
+- `userId`: User who performed the action
+- `action`: Action performed
+- `resource`: Resource type
+- `resourceId`: Resource identifier
+- `details`: Additional details
+- `ipAddress`, `userAgent`: Request metadata
+- `createdAt`: Timestamp
+
+## 🔌 API Endpoints
+
+### Authentication
+- `POST /auth/login` - User login
+- `POST /auth/register` - User registration (Owner/Admin only)
+- `GET /auth/profile` - Get current user profile
+
+### Tasks
+- `GET /tasks` - List all accessible tasks
+- `GET /tasks/:id` - Get specific task
+- `POST /tasks` - Create new task
+- `PATCH /tasks/:id` - Update task
+- `DELETE /tasks/:id` - Delete task
+- `GET /tasks/status/:status` - Filter by status
+- `GET /tasks/category/:category` - Filter by category
+
+### Audit
+- `GET /audit/logs` - View audit logs (Owner/Admin only)
+
+## 🎨 Frontend Features
+
+### Task Dashboard
+- **Responsive Design**: Mobile-first approach with TailwindCSS
+- **Task Management**: Create, edit, delete, and view tasks
+- **Filtering**: Filter by status and category
+- **Role-based UI**: Different features based on user role
+- **Real-time Updates**: Immediate UI updates after actions
+
+### Authentication UI
+- **Login Form**: Clean, accessible login interface
+- **Role Indicators**: Visual role badges
+- **Error Handling**: User-friendly error messages
+
+## 🛡️ Security Features
+
+### JWT Authentication
+- Secure token-based authentication
+- Token expiration (24 hours)
+- Automatic token validation
+
+### RBAC Implementation
+- Permission-based access control
+- Organization-level data isolation
+- Role inheritance and hierarchy
+
+### Data Validation
+- Input validation on both frontend and backend
+- SQL injection prevention with TypeORM
+- XSS protection
+
+## 🧪 Testing
+
+### Backend Testing
+```bash
+npm run test:api
+```
+
+### Frontend Testing
+```bash
+npm run test:dashboard
+```
+
+### E2E Testing
+```bash
+npm run e2e:dashboard
+```
+
+## 📁 Project Structure
+
+### Backend (NestJS)
+```
+api/
+├── src/
+│   ├── entities/           # TypeORM entities
+│   ├── auth/              # Authentication module
+│   ├── tasks/             # Tasks module
+│   ├── audit/             # Audit logging module
+│   └── main.ts            # Application entry point
+└── .env                   # Environment variables
+```
+
+### Frontend (Angular)
+```
+dashboard/
+├── src/
+│   ├── app/
+│   │   ├── components/    # Angular components
+│   │   ├── services/      # Angular services
+│   │   └── app.routes.ts  # Routing configuration
+│   └── styles.css         # Global styles with TailwindCSS
+```
+
+### Shared Libraries
+```
+libs/
+├── data/                  # Shared interfaces and DTOs
+└── auth/                  # RBAC decorators and guards
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file in the `api` directory:
+
+```env
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+DATABASE_URL=sqlite:database.sqlite
+PORT=3000
+```
+
+### Database Configuration
+
+The system uses SQLite for development. For production, update the database configuration in `api/src/app.module.ts`.
+
+## 🚀 Deployment
+
+### Backend Deployment
+1. Set production environment variables
+2. Build the application: `npm run build:api`
+3. Deploy to your preferred platform
+
+### Frontend Deployment
+1. Update API URLs in services
+2. Build the application: `npm run build:dashboard`
+3. Deploy to your preferred platform
+
+## 🔮 Future Enhancements
+
+### Advanced Features
+- **Task Dependencies**: Link related tasks
+- **Time Tracking**: Track time spent on tasks
+- **File Attachments**: Attach files to tasks
+- **Comments System**: Add comments to tasks
+- **Notifications**: Real-time notifications
+- **Advanced Reporting**: Analytics and reports
+
+### Security Improvements
+- **JWT Refresh Tokens**: Implement refresh token rotation
+- **CSRF Protection**: Add CSRF tokens
+- **Rate Limiting**: Implement API rate limiting
+- **RBAC Caching**: Cache permission checks for performance
+
+### Scalability
+- **Database Optimization**: Add indexes and query optimization
+- **Caching Layer**: Implement Redis caching
+- **Microservices**: Split into microservices
+- **Load Balancing**: Add load balancer support
+
