@@ -1,4 +1,4 @@
-# 🚀 Turbovets - Secure Task Management System
+# 🚀 Secure Task Management System
 
 A comprehensive, enterprise-grade task management system built with **NestJS**, **Angular**, and **NX** monorepo architecture, featuring **Role-Based Access Control (RBAC)** and **hierarchical organization management**.
 
